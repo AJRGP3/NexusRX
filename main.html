@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #007bff; /* Main blue for accents */
+            --light-blue: #e8f4ff; /* Light blue for active states/gradients */
+            --white: #ffffff;
+            --light-gray: #f8f8f8; /* Background for body, input field */
+            --medium-gray: #cccccc; /* For inactive elements */
+            --dark-gray: #333333; /* Main text color */
+            --secondary-text-color: #666666; /* Secondary text, descriptions */
+            --border-color: #e0e0e0; /* Subtle borders */
+            --chat-bubble-bg-ai: #e0e0e0; /* AI bubble background */
+            --chat-bubble-text-ai: var(--dark-gray); /* AI bubble text color */
+            --chat-bubble-bg-user: var(--primary-blue); /* User bubble background */
+            --chat-bubble-text-user: var(--white); /* User bubble text color */
+            --font-family: 'Segoe UI', sans-serif;
+            --header-height: 60px;
+            --chat-header-gradient-start: #007bff; /* Start blue for chat header */
+            --chat-header-gradient-end: #66b3ff; /* Lighter blue for chat header */
+        }
+
+        body {
+            margin: 0;
+            font-family: var(--font-family);
+            background-color: var(--light-gray);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden; /* Prevent body scroll, app-container handles it */
+            color: var(--dark-gray); /* Default text color for body */
+        }
+
+        .app-container {
+            width: 100%; /* Make it fill the width */
+            max-width: 900px; /* Max width for larger screens for better readability */
+            height: 100vh; /* Make it fill the viewport height */
+            background-color: var(--white);
+            border-radius: 0; /* Remove border-radius for full screen */
+            box-shadow: none; /* Remove shadow for full screen */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* App container itself doesn't scroll, content-area does */
+            position: relative;
+        }
+
+        /* --- Header --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            height: var(--header-height);
+            background-color: var(--white);
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            z-index: 101;
+            box-sizing: border-box;
+            flex-shrink: 0; /* Prevent header from shrinking */
+        }
+
+        .header-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--dark-gray);
+            margin: 0;
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .header-icon-btn {
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            color: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .header-icon-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--primary-blue);
+            color: var(--white);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+
+        /* --- Sidebar Navigation --- */
+        .sidebar {
+            position: fixed; /* Fixed position relative to viewport */
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100%;
+            background-color: var(--white);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+            z-index: 102; /* Higher z-index to be above everything */
+            padding-top: var(--header-height);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto; /* Enable scrolling for sidebar content */
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .sidebar-menu-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            cursor: pointer;
+            color: var(--dark-gray); /* Default color for menu item text */
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+            font-size: 0.95em;
+            font-weight: 500;
+        }
+        .sidebar-menu-item:hover, .sidebar-menu-item.active {
+            background-color: var(--light-blue);
+            color: var(--primary-blue);
+        }
+        .sidebar-menu-item.active svg {
+             fill: var(--primary-blue);
+        }
+
+        .sidebar-menu-item svg {
+            width: 22px;
+            height: 22px;
+            margin-right: 15px;
+            fill: var(--secondary-text-color); /* Default icon color */
+        }
+
+        .sidebar-divider {
+            border-top: 1px solid var(--border-color);
+            margin: 10px 20px;
+        }
+
+        .sidebar-features-title {
+            font-size: 0.9em;
+            color: var(--secondary-text-color);
+            padding: 10px 20px 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .sidebar-feature-list {
+            list-style: none;
+            padding: 0 20px;
+            margin: 0;
+        }
+
+        .sidebar-feature-list-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            font-size: 0.85em;
+            color: var(--secondary-text-color);
+        }
+        /* Custom bullet point for sidebar feature list */
+        .sidebar-feature-list-item::before {
+            content: '•';
+            color: var(--primary-blue);
+            font-size: 1.2em;
+            line-height: 1;
+            margin-right: 8px;
+        }
+
+        /* --- Overlay for sidebar --- */
+        .overlay {
+            position: fixed; /* Fixed position relative to viewport */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 100; /* Between header and sidebar */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* --- Main Content Area (Unified Scroll) --- */
+        .main-content-area {
+            flex-grow: 1;
+            overflow-y: auto; /* This is the primary scrollbar for combined content */
+            padding-top: 20px; /* Padding for the top of the combined content */
+            padding-bottom: 20px; /* Padding for the bottom of the combined content */
+            box-sizing: border-box;
+            background-color: var(--light-gray); /* Background for the scrollable area */
+        }
+        /* Specific padding for sections within the main-content-area */
+        .welcome-section, .chat-section {
+            padding-left: 20px;
+            padding-right: 20px;
+            max-width: 600px; /* Limit width for readability on larger screens */
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
+        }
+
+        /* --- Welcome Section Specific Styles (Radial Gradient Background) --- */
+        .welcome-section {
+            text-align: center;
+            background: radial-gradient(circle at center top, #e0f2ff 0%, #cceeff 30%, #aaddff 60%, #ffffff 100%); /* Blue focused gradient */
+            padding-top: 40px; /* More padding at top */
+            padding-bottom: 40px; /* More padding at bottom */
+            margin-bottom: 30px; /* Space between welcome and chat */
+            border-bottom: 1px solid var(--border-color); /* Separator */
+        }
+        .welcome-logo-container {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: var(--white);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 25px auto; /* Centered with margin */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+        .welcome-logo {
+            width: 80px;
+            height: 80px;
+            fill: var(--primary-blue);
+        }
+        .welcome-section h2 {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--dark-gray);
+            margin-bottom: 10px;
+        }
+        .welcome-section p {
+            font-size: 0.95em;
+            color: var(--secondary-text-color);
+            line-height: 1.5;
+            margin-bottom: 30px;
+            max-width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .welcome-quick-links {
+            width: 100%; /* Take full width of its parent */
+            max-width: 400px; /* Limit width of quick links for aesthetics */
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .welcome-quick-link-btn {
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            text-align: left;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .welcome-quick-link-btn:hover {
+            background-color: var(--light-blue);
+            border-color: var(--primary-blue);
+        }
+        .welcome-quick-link-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--primary-blue);
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .welcome-quick-link-content {
+            flex-grow: 1;
+        }
+        .welcome-quick-link-content strong {
+            display: block;
+            font-size: 1em;
+            font-weight: 600;
+            color: var(--dark-gray);
+            margin-bottom: 3px;
+        }
+        .welcome-quick-link-content span {
+            font-size: 0.85em;
+            color: var(--secondary-text-color);
+        }
+        .welcome-features-section {
+            text-align: left;
+            width: 100%;
+            max-width: 400px; /* Limit width of features for aesthetics */
+            margin: 0 auto;
+            padding-top: 20px;
+        }
+        .welcome-features-title {
+            font-size: 1em;
+            font-weight: 600;
+            color: var(--dark-gray);
+            margin-bottom: 15px;
+        }
+        .welcome-feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+            color: var(--dark-gray);
+        }
+        .welcome-feature-item svg {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            fill: var(--primary-blue);
+            flex-shrink: 0;
+        }
+
+        /* --- Chat Section Specific Styles --- */
+        .chat-section {
+            padding-bottom: 20px; /* Space for messages above input */
+        }
+        .chat-header-chat { /* Renamed to avoid conflict with main header */
+            background: linear-gradient(to right, var(--chat-header-gradient-start), var(--chat-header-gradient-end));
+            color: var(--white);
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin: 0 -20px 20px -20px; /* Negative margin to span full width of app container, adjust for main-content-area padding */
+            /* If you want it truly full width of the app-container, set position: sticky; top: 0; z-index: 99; and margin: 0; */
+        }
+        .chat-header-chat p {
+            margin: 0;
+            font-size: 0.85em;
+            font-weight: normal;
+            opacity: 0.9;
+        }
+
+        .chat-messages {
+            display: flex;
+            flex-direction: column; /* Messages stack vertically */
+            width: 100%;
+            box-sizing: border-box;
+            /* No overflow-y here, handled by .main-content-area */
+        }
+
+        .message-row {
+            display: flex;
+            margin-bottom: 15px; /* Increased spacing between messages */
+            align-items: flex-start; /* Align items to the top in the row */
+            width: 100%; /* Make sure rows take full width to control alignment */
+            box-sizing: border-box;
+        }
+
+        .message-icon {
+            width: 36px; /* Slightly larger icon */
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            font-size: 0.9em;
+            font-weight: bold;
+            color: var(--white);
+            margin: 0 10px; /* More spacing around icons */
+        }
+
+        .ai-icon {
+            background-color: var(--primary-blue);
+        }
+
+        .user-icon {
+            background-color: var(--medium-gray);
+            order: 2; /* Puts user icon on the right */
+        }
+        .message-row.user {
+            justify-content: flex-end; /* Aligns user row to the right */
+        }
+        .message-row.user .message-bubble {
+            margin-left: auto; /* Push user bubble to the right */
+        }
+
+        .message-bubble {
+            padding: 12px 18px; /* Slightly more padding */
+            border-radius: 22px; /* Slightly more rounded corners */
+            max-width: 78%; /* Slightly wider bubbles */
+            word-wrap: break-word;
+            font-size: 0.98em; /* Slightly larger text */
+            line-height: 1.5; /* Improved line height for readability */
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1); /* Slightly more prominent shadow */
+            position: relative;
+        }
+
+        .ai-bubble {
+            background-color: var(--chat-bubble-bg-ai);
+            color: var(--chat-bubble-text-ai);
+            border-bottom-left-radius: 6px; /* Match image style */
+        }
+        .user-bubble {
+            background-color: var(--chat-bubble-bg-user);
+            color: var(--chat-bubble-text-user);
+            order: 1;
+            border-bottom-right-radius: 6px; /* Match image style */
+        }
+
+        .typing-indicator .message-bubble {
+            background-color: var(--chat-bubble-bg-ai);
+            color: var(--secondary-text-color);
+            font-style: italic;
+            border-bottom-left-radius: 22px;
+        }
+
+        /* Formatting for streamed text (e.g., Markdown) */
+        .message-bubble pre {
+            white-space: pre-wrap; /* Preserve whitespace and wrap text */
+            word-break: break-all; /* Break long words */
+            background-color: rgba(0,0,0,0.05);
+            padding: 8px;
+            border-radius: 5px;
+            margin-top: 8px; /* Spacing for code blocks */
+            margin-bottom: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        .message-bubble p {
+            margin: 0 0 8px 0; /* Add more margin between paragraphs */
+        }
+        .message-bubble p:last-child {
+            margin-bottom: 0;
+        }
+        .message-bubble ul, .message-bubble ol {
+            padding-left: 25px; /* Deeper indentation for lists */
+            margin: 8px 0; /* Spacing for lists */
+        }
+        .message-bubble li {
+            margin-bottom: 5px; /* Spacing for list items */
+        }
+        .message-bubble strong {
+            font-weight: 700;
+        }
+        .message-bubble em {
+            font-style: italic;
+        }
+
+        /* Chat Input Area (fixed at bottom) */
+        .input-area {
+            flex-shrink: 0; /* Prevent input area from shrinking */
+            width: 100%;
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: var(--white);
+            border-top: 1px solid var(--border-color);
+            box-sizing: border-box;
+            gap: 10px;
+        }
+
+        #userInput {
+            flex-grow: 1;
+            padding: 12px 18px;
+            border: 1px solid var(--border-color);
+            border-radius: 25px;
+            font-size: 0.95em;
+            outline: none;
+            transition: border-color 0.2s ease;
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+        }
+
+        #userInput:focus {
+            border-color: var(--primary-blue);
+            background-color: var(--white);
+        }
+
+        .chat-input-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .send-button, .mic-button {
+            background-color: var(--primary-blue);
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .send-button:hover, .mic-button:hover {
+            background-color: #0056b3;
+        }
+        .send-button:disabled, .mic-button:disabled {
+            background-color: var(--medium-gray);
+            cursor: not-allowed;
+        }
+        .send-button svg, .mic-button svg {
+            fill: var(--white);
+            width: 22px;
+            height: 22px;
+        }
+        .send-button#sendButton svg { /* Specific for the send button */
+            transform: rotate(45deg); /* Arrow pointing up-right */
+        }
+
+        /* --- Scrollbar styles for Webkit browsers --- */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px; /* For horizontal scrollbars */
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Helper class for hidden elements */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <button class="header-icon-btn" id="menuButton">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                </svg>
+            </button>
+            <h1 class="header-title">Health Assistant</h1>
+            <div class="user-avatar">A</div>
+        </div>
+
+        <div class="sidebar" id="sidebar">
+            <ul class="sidebar-menu">
+                <li class="sidebar-menu-item" data-section="chat-section">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 6H6v-2h8v2zm4-4H6V7h12v2z"/>
+                    </svg>
+                    Ask Health Questions
+                </li>
+            </ul>
+            <div class="sidebar-divider"></div>
+            <h3 class="sidebar-features-title">Key Features</h3>
+            <ul class="sidebar-feature-list">
+                <li class="sidebar-feature-list-item">Instant Health Answers</li>
+                <li class="sidebar-feature-list-item">Symptom Analysis</li>
+                <li class="sidebar-feature-list-item">Medical Terminology Clarification</li>
+                <li class="sidebar-feature-list-item">Secure Information Handling</li>
+            </ul>
+        </div>
+
+        <div class="overlay" id="overlay"></div>
+
+        <div class="main-content-area" id="mainContentArea">
+            <div class="welcome-section" id="welcomeSection">
+                <div class="welcome-logo-container">
+                    <svg class="welcome-logo" viewBox="0 0 24 24">
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                    </svg>
+                </div>
+                <h2>Welcome to Your AI Health Assistant</h2>
+                <p>Get instant answers to your health questions, analyze symptoms, and manage your medical information securely.</p>
+                <div class="welcome-quick-links">
+                    <button class="welcome-quick-link-btn" data-section="chat-section">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 6H6v-2h8v2zm4-4H6V7h12v2z"/>
+                        </svg>
+                        <div class="welcome-quick-link-content">
+                            <strong>Ask Health Questions</strong>
+                            <span>Get instant AI-powered health guidance</span>
+                        </div>
+                    </button>
+                </div>
+                <div class="welcome-features-section">
+                    <h3 class="welcome-features-title">Key Features</h3>
+                    <div class="welcome-feature-item">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                        Instant Health Answers
+                    </div>
+                    <div class="welcome-feature-item">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                        Symptom Analysis
+                    </div>
+                    <div class="welcome-feature-item">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                        Medical Terminology Clarification
+                    </div>
+                    <div class="welcome-feature-item">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                        </svg>
+                        Secure Information Handling
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-section" id="chatSection">
+                <div class="chat-header-chat">
+                    Health Chat
+                    <p>Get instant answers to your health questions</p>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <button class="send-button" id="plusButton">
+                <svg viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+            </button>
+            <input type="text" id="userInput" placeholder="Ask about symptoms, injuries...">
+            <div class="chat-input-buttons">
+                <button class="send-button" id="micButton">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3.31-2.69 6-6 6s-6-2.69-6-6H4c0 3.98 3.5 7.29 8 7.94V21h2v-3.06c4.5-.65 8-3.96 8-7.94h-2.7z"/>
+                    </svg>
+                </button>
+                <button class="send-button" id="sendButton">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const appContainer = document.querySelector('.app-container');
+            const menuButton = document.getElementById('menuButton');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const sidebarMenuItems = document.querySelectorAll('.sidebar-menu-item');
+            const welcomeQuickLinks = document.querySelectorAll('.welcome-quick-link-btn');
+            const mainContentArea = document.getElementById('mainContentArea'); // The new scrollable area
+
+            const chatMessages = document.getElementById('chatMessages');
+            const userInput = document.getElementById('userInput');
+            const sendButton = document.getElementById('sendButton');
+            const micButton = document.getElementById('micButton');
+            const plusButton = document.getElementById('plusButton');
+
+            // IMPORTANT: This URL points to your Flask backend on port 5000!
+            const OLLAMA_BACKEND_URL = 'http://127.0.0.1:5000/api/generate-response';
+
+            let currentTypingMessageRow = null;
+            let abortController = null;
+
+            // --- UI Navigation and Scroll Functions ---
+
+            function openSidebar() {
+                sidebar.classList.add('open');
+                overlay.classList.add('active');
+            }
+
+            function closeSidebar() {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+            }
+
+            // Function to scroll to a specific section (e.g., chat)
+            function scrollToSection(sectionId) {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    mainContentArea.scrollTo({
+                        top: section.offsetTop,
+                        behavior: 'smooth'
+                    });
+                }
+                closeSidebar(); // Close sidebar after navigating
+            }
+
+            function autoScrollChatToBottom() {
+                // Scroll the main content area to ensure the bottom of chat messages is visible
+                mainContentArea.scrollTo({
+                    top: mainContentArea.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
+
+            // --- Chat Specific Functions ---
+
+            // Function to convert Markdown-like text to HTML for better display
+            function formatMessageText(text) {
+                // This is a basic markdown parser. For full robust markdown, consider a library.
+                // Replace code blocks first to prevent inner formatting
+                text = text.replace(/```([\s\S]*?)```/g, '<pre>$1</pre>');
+                text = text.replace(/`(.*?)`/g, '<code>$1</code>');
+
+                // Bold text: **text** or *text*
+                text = text.replace(/\*\*(.*?)\*\*|\*(.*?)\*/g, '<strong>$1$2</strong>');
+                // Italic text: _text_
+                text = text.replace(/_(.*?)_/g, '<em>$1</em>');
+
+                // Handle lists (basic, assumes list items are on new lines)
+                // Convert list items to temporary placeholders before paragraph splitting
+                text = text.replace(/^\s*[-*+]\s*(.*)$/gm, '<li>$1</li>'); // Unordered
+                text = text.replace(/^\s*\d+\.\s*(.*)$/gm, '<li>$1</li>'); // Ordered
+
+                // Group list items into ul/ol tags
+                const listPattern = /(?:<li>.*?<\/li>\s*)+/g;
+                text = text.replace(listPattern, (match) => {
+                    if (match.trim().startsWith('<li>')) { // Simple check, could be more robust
+                        // Determine if it's an ordered or unordered list by checking the original lines
+                        // This might be tricky with just the `text` after replacements.
+                        // A more reliable way is to process lines before joining.
+                        // For simplicity, let's just make it an unordered list.
+                        return `<ul>${match}</ul>`;
+                    }
+                    return match;
+                });
+
+                // Newlines to paragraphs, but avoid wrapping already processed blocks
+                text = text.split('\n').map(line => {
+                    const trimmedLine = line.trim();
+                    if (trimmedLine === '' || trimmedLine.startsWith('<pre') || trimmedLine.startsWith('<code') || trimmedLine.startsWith('<ul') || trimmedLine.startsWith('<ol') || trimmedLine.startsWith('<li>') || trimmedLine.startsWith('<strong>') || trimmedLine.startsWith('<em>')) {
+                        return line;
+                    }
+                    return `<p>${line}</p>`;
+                }).join('');
+
+                // Clean up any double paragraph tags or empty paragraph tags that might have resulted
+                text = text.replace(/<p>\s*<\/p>/g, ''); // Remove empty paragraphs
+                text = text.replace(/<p><(ul|ol|pre|code)/g, '<$1'); // Remove <p> before ul/ol/pre/code
+                text = text.replace(/(ul|ol|pre|code)><\/p>/g, '$1>'); // Remove </p> after ul/ol/pre/code
+
+                return text;
+            }
+
+
+            function createIconSVG(type) {
+                if (type === 'ai') {
+                    // Star Icon for AI (simplified for consistency)
+                    return `<svg viewBox="0 0 24 24" fill="white" width="20px" height="20px">
+                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                            </svg>`;
+                } else {
+                    // User Profile Icon
+                    return `<svg viewBox="0 0 24 24" fill="white" width="20px" height="20px">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>`;
+                }
+            }
+
+            function addMessageToChat(role, text, isTyping = false) {
+                const messageRow = document.createElement('div');
+                messageRow.classList.add('message-row');
+                messageRow.classList.add(role === 'AI' ? 'ai' : 'user');
+
+                const messageIcon = document.createElement('div');
+                messageIcon.classList.add('message-icon');
+                messageIcon.classList.add(role === 'AI' ? 'ai-icon' : 'user-icon');
+                messageIcon.innerHTML = role === 'AI' ? createIconSVG('ai') : createIconSVG('user');
+
+                const messageBubble = document.createElement('div');
+                messageBubble.classList.add('message-bubble');
+                messageBubble.classList.add(role === 'AI' ? 'ai-bubble' : 'user-bubble');
+
+                if (isTyping) {
+                    messageRow.classList.add('typing-indicator');
+                    messageBubble.textContent = 'AI is thinking...';
+                } else {
+                    messageBubble.innerHTML = formatMessageText(text);
+                }
+
+                if (role === 'AI') {
+                    messageRow.appendChild(messageIcon);
+                    messageRow.appendChild(messageBubble);
+                } else {
+                    messageRow.appendChild(messageBubble);
+                    messageRow.appendChild(messageIcon);
+                }
+                chatMessages.appendChild(messageRow);
+
+                autoScrollChatToBottom(); // Auto-scroll whenever a new message is added
+
+                if (isTyping) {
+                    currentTypingMessageRow = messageRow;
+                }
+            }
+
+            function updateStreamingMessage(textChunk) {
+                if (currentTypingMessageRow) {
+                    const messageBubble = currentTypingMessageRow.querySelector('.message-bubble');
+                    if (messageBubble) {
+                        if (currentTypingMessageRow.classList.contains('typing-indicator')) {
+                            messageBubble.textContent = ''; // Clear "AI is thinking..."
+                            currentTypingMessageRow.classList.remove('typing-indicator');
+                            messageBubble.style.color = 'var(--dark-gray)'; // Reset color after typing
+                        }
+                        // Append raw chunk and then re-format the entire content
+                        messageBubble.innerHTML += textChunk;
+                        // Important: Re-parse and re-apply formatting to the entire current message content
+                        // This helps correctly render markdown as it streams.
+                        const currentRawText = messageBubble.textContent; // Get the raw text content
+                        messageBubble.innerHTML = formatMessageText(currentRawText); // Re-render with formatting
+
+                        autoScrollChatToBottom();
+                    }
+                }
+            }
+
+
+            function toggleInputFields(enabled) {
+                userInput.disabled = !enabled;
+                sendButton.disabled = !enabled;
+                micButton.disabled = !enabled;
+                plusButton.disabled = !enabled;
+            }
+
+            async function sendMessage() {
+                const userText = userInput.value.trim();
+                if (!userText) return;
+
+                addMessageToChat('User', userText);
+                userInput.value = '';
+
+                addMessageToChat('AI', '', true); // Add typing indicator
+
+                toggleInputFields(false);
+
+                abortController = new AbortController();
+                const signal = abortController.signal;
+
+                try {
+                    const response = await fetch(OLLAMA_BACKEND_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userInput: userText }),
+                        signal: signal
+                    });
+
+                    if (!response.ok) {
+                        let errorData;
+                        try {
+                            errorData = await response.json();
+                        } catch (e) {
+                            errorData = { error: `Server error: ${response.status} ${response.statusText}` };
+                        }
+                        throw new Error(errorData.error || `Server error: ${response.status} ${response.statusText}`);
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder('utf-8');
+                    let buffer = '';
+
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) {
+                            break;
+                        }
+                        buffer += decoder.decode(value, { stream: true });
+
+                        let lastNewlineIndex;
+                        while ((lastNewlineIndex = buffer.indexOf('\n')) !== -1) {
+                            const line = buffer.substring(0, lastNewlineIndex).trim();
+                            buffer = buffer.substring(lastNewlineIndex + 1);
+
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const jsonData = JSON.parse(line.substring(6));
+                                    if (jsonData.token) {
+                                        updateStreamingMessage(jsonData.token);
+                                    }
+                                    if (jsonData.done) {
+                                        return;
+                                    }
+                                    if (jsonData.error) {
+                                        throw new Error(jsonData.error);
+                                    }
+                                } catch (e) {
+                                    console.error('Error parsing streaming JSON (SSE format):', e, line);
+                                }
+                            } else if (line) {
+                                try {
+                                    const jsonData = JSON.parse(line);
+                                    if (jsonData.response) {
+                                        updateStreamingMessage(jsonData.response);
+                                    }
+                                    if (jsonData.done) {
+                                        return;
+                                    }
+                                    if (jsonData.error) {
+                                        throw new Error(jsonData.error);
+                                    }
+                                } catch (e) {
+                                    // Not JSON or malformed, ignore
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        console.log('Fetch request aborted.');
+                    } else {
+                        console.error('Fetch streaming error:', error);
+                        if (currentTypingMessageRow) {
+                            const messageBubble = currentTypingMessageRow.querySelector('.message-bubble');
+                            if (messageBubble) {
+                                let errorMessage = error.message || "An unexpected error occurred during streaming.";
+                                if (errorMessage.includes('Server error initiating stream:') || errorMessage.includes('Failed to fetch')) {
+                                    errorMessage = "Sorry, the AI service encountered an error or is not reachable. Please ensure Ollama and your backend are running.";
+                                }
+                                messageBubble.textContent = errorMessage; // Use textContent for error
+                                messageBubble.style.color = 'red';
+                                currentTypingMessageRow.classList.remove('typing-indicator');
+                            }
+                        } else {
+                            addMessageToChat('AI', error.message || "An unexpected error occurred.");
+                        }
+                    }
+                } finally {
+                    toggleInputFields(true);
+                    currentTypingMessageRow = null;
+                    autoScrollChatToBottom(); // Ensure it scrolls to bottom after stream ends/errors
+                    abortController = null;
+                }
+            }
+
+            // --- Event Listeners ---
+
+            // Sidebar and Overlay
+            menuButton.addEventListener('click', openSidebar);
+            overlay.addEventListener('click', closeSidebar);
+            sidebarMenuItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    const sectionId = e.currentTarget.dataset.section;
+                    scrollToSection(sectionId);
+                });
+            });
+
+            // Welcome page quick links
+            welcomeQuickLinks.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const sectionId = e.currentTarget.dataset.section;
+                    scrollToSection(sectionId);
+                });
+            });
+
+            // Chat input and send
+            sendButton.addEventListener('click', sendMessage);
+            userInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            // Initial chat message for the chat section (only once)
+            const initialChatLoad = () => {
+                if (!chatMessages.dataset.initialized) {
+                    addMessageToChat('AI', "Hello! I'm your AI Health Assistant. I'm here to help answer your health questions and provide guidance. Please remember that I'm not a replacement for professional medical advice. How can I assist you today?");
+                    chatMessages.dataset.initialized = 'true';
+                }
+            };
+
+            // Call initial chat load when the DOM is ready
+            initialChatLoad();
+        });
+    </script>
+</body>
+</html>
