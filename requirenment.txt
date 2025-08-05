@@ -1,3 +1,4 @@
 pip install flask
 pip install ollama
+Download Ollama, use the command "ollama install gemma3n:e2b"
 
