@@ -1,4 +1,8 @@
 pip install flask
 pip install ollama
 Download Ollama, use the command "ollama install gemma3n:e2b"
+Put both html and py into a folder.
+Make a new folder within that folder and call it templates
+Drag the html file into that folder.
+First run the python and then use open the html
 
