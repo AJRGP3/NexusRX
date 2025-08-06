@@ -1,4 +1,4 @@
-Frontend: HTML5, CSS3, JavaScript (Designed for a responsive, intuitive, and efficient user interface)
+Frontend: HTML, CSS, JavaScript (Designed for a responsive, intuitive, and efficient user interface)
 
 Backend: Python (Flask Framework) (Orchestrating robust communication and data processing)
 
